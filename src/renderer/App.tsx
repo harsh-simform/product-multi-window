@@ -1,50 +1,21 @@
-import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import icon from '../../assets/icon.svg';
+/* eslint-disable react/function-component-definition */
+// App.tsx
 import './App.css';
+import React from 'react';
+import { HashRouter as Router, Route, Routes } from 'react-router-dom';
+import ProductPage from './components/ProductPage';
+import ProductsPage from './components/ProductsPage';
+import { products } from './data';
 
-function Hello() {
-  return (
-    <div>
-      <div className="Hello">
-        <img width="200" alt="icon" src={icon} />
-      </div>
-      <h1>electron-react-boilerplate</h1>
-      <div className="Hello">
-        <a
-          href="https://electron-react-boilerplate.js.org/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="books">
-              📚
-            </span>
-            Read our docs
-          </button>
-        </a>
-        <a
-          href="https://github.com/sponsors/electron-react-boilerplate"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="folded hands">
-              🙏
-            </span>
-            Donate
-          </button>
-        </a>
-      </div>
-    </div>
-  );
-}
-
-export default function App() {
+const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Hello />} />
+        <Route path="/" element={<ProductsPage products={products} />} />
+        <Route path="/product" element={<ProductPage products={products} />} />
       </Routes>
     </Router>
   );
-}
+};
+
+export default App;

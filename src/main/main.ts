@@ -9,11 +9,13 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, ipcRenderer } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+
+const productWindows: { id: number; window: BrowserWindow }[] = [];
 
 class AppUpdater {
   constructor() {
@@ -23,12 +25,60 @@ class AppUpdater {
   }
 }
 
+const RESOURCES_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'assets')
+  : path.join(__dirname, '../../assets');
+
+const getAssetPath = (...paths: string[]): string => {
+  return path.join(RESOURCES_PATH, ...paths);
+};
+
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
+const createProductWindow = (productId: number) => {
+  const productWindow = new BrowserWindow({
+    show: true,
+    width: 1024,
+    height: 728,
+    icon: getAssetPath('icon.png'),
+    webPreferences: {
+      preload: app.isPackaged
+        ? path.join(__dirname, 'preload.js')
+        : path.join(__dirname, '../../.erb/dll/preload.js'),
+    },
+  });
+
+  productWindow.loadURL(resolveHtmlPath(`index.html#/product?id=${productId}`));
+  return productWindow;
+};
+
+ipcMain.on('open-product-detail-window', (event, arg) => {
+  const data = JSON.parse(arg);
+  console.log({ data });
+
+  const { productId, status } = data;
+  if (status === 'open') {
+    productWindows.push({
+      id: productId,
+      window: createProductWindow(productId),
+    });
+  } else if (status === 'close') {
+    const index = productWindows.findIndex((item) => item.id === productId);
+    productWindows[index].window.destroy();
+    productWindows.splice(index, 1);
+  }
+});
+
+ipcMain.on('purchase-product', (event, arg) => {
+  const data = JSON.parse(arg);
+  console.log({ data });
+  const { productId } = data;
+  console.log(productId);
+
+  mainWindow?.webContents.send('purchase-count-increase', productId);
+  const index = productWindows.findIndex((item) => item.id === productId);
+  productWindows[index].window.destroy();
+  productWindows.splice(index, 1);
 });
 
 if (process.env.NODE_ENV === 'production') {
@@ -60,14 +110,6 @@ const createWindow = async () => {
   if (isDebug) {
     await installExtensions();
   }
-
-  const RESOURCES_PATH = app.isPackaged
-    ? path.join(process.resourcesPath, 'assets')
-    : path.join(__dirname, '../../assets');
-
-  const getAssetPath = (...paths: string[]): string => {
-    return path.join(RESOURCES_PATH, ...paths);
-  };
 
   mainWindow = new BrowserWindow({
     show: false,
