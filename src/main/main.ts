@@ -58,6 +58,11 @@ const createProductWindow = (productId: number) => {
       productWindow.focus();
     }
   });
+  productWindow.on('close', () => {
+    const index = productWindows.findIndex((item) => item.id === productId);
+    productWindows[index].window.destroy();
+    productWindows.splice(index, 1);
+  });
   return productWindow;
 };
 
