@@ -67,7 +67,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ products }) => {
                 Price: ${product.price}
               </Text>
               <Button
-                bg={'ActiveBorder'}
+                bg="ActiveBorder"
                 fontWeight="bold"
                 onClick={handlePurchase}
               >

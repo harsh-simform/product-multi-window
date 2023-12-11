@@ -37,7 +37,7 @@ let mainWindow: BrowserWindow | null = null;
 
 const createProductWindow = (productId: number) => {
   const productWindow = new BrowserWindow({
-    show: true,
+    show: false,
     width: 1024,
     height: 728,
     icon: getAssetPath('icon.png'),
@@ -47,8 +47,17 @@ const createProductWindow = (productId: number) => {
         : path.join(__dirname, '../../.erb/dll/preload.js'),
     },
   });
-
   productWindow.loadURL(resolveHtmlPath(`index.html#/product?id=${productId}`));
+  productWindow.webContents.on('did-finish-load', () => {
+    if (productWindows.some((item) => item.id === productId)) {
+      const productWin = productWindows.find((item) => item.id === productId);
+      productWin?.window.show();
+      productWin?.window.focus();
+    } else {
+      productWindow.show();
+      productWindow.focus();
+    }
+  });
   return productWindow;
 };
 
